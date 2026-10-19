@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranikhet Himalaya peak finder</title>
+<style>
+:root{--bg:#f6f4ef;--ink:#1d2733;--mute:#5d6b7a;--line:#d9d6cc;--card:#ffffff;--acc:#c9731a}
+@media (prefers-color-scheme:dark){:root{--bg:#141b24;--ink:#eef1f5;--mute:#9aa8b8;--line:#2b3644;--card:#1c2632;--acc:#f0a64a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif;line-height:1.5;padding:16px;max-width:900px;margin-inline:auto}
+h1{font-size:22px;margin:0 0 2px;font-weight:600}
+.sub{font-size:14px;color:var(--mute);margin:0 0 12px;font-family:system-ui,sans-serif}
+#sc{overflow-x:auto;border:1px solid var(--line);border-radius:12px;-webkit-overflow-scrolling:touch}
+svg{display:block;min-width:1500px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0;font-family:system-ui,sans-serif}
+.card b{font-size:16px}
+.card p{margin:2px 0 0;font-size:13px;color:var(--mute)}
+#chips{display:flex;flex-wrap:wrap;gap:6px;font-family:system-ui,sans-serif}
+button,input{font:inherit;font-size:14px}
+button{padding:6px 12px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;cursor:pointer}
+button.on{border-color:var(--acc);outline:1px solid var(--acc)}
+.edit{display:grid;gap:8px;margin-top:10px}
+.edit label{font-size:12px;color:var(--mute)}
+.edit input{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.hint{font-size:12px;color:var(--mute);font-family:system-ui,sans-serif;margin:8px 0 0}
+</style>
+</head>
+<body>
+<h1>Himalaya from Ranikhet</h1>
+<p class="sub">West on the left, east on the right. Swipe sideways, tap a dot to see or edit its label.</p>
+<div id="sc">
+<svg id="pano" viewBox="0 150 2576 260" width="1500" role="img" aria-label="Panorama of Himalayan peaks from Ranikhet">
+<rect x="0" y="150" width="2576" height="90" fill="#5f9de6"/>
+<rect x="0" y="240" width="2576" height="170" fill="#86b4ea"/>
+<g fill="#f3f7fc">
+<path d="M40,292 L70,280 L120,290 L150,280 L230,272 L300,262 L340,270 L370,266 L420,274 L470,268 L520,252 L560,249 L600,258 L650,272 L700,266 L740,262 L760,253 L790,268 L830,278 L830,296 L40,296Z"/>
+<path d="M980,268 L1010,256 L1040,262 L1045,272 L980,272Z"/>
+<path d="M1200,262 L1235,251 L1280,260 L1330,262 L1330,274 L1200,274Z"/>
+<path d="M1430,244 L1465,222 L1500,240 L1500,252 L1430,252Z"/>
+<path d="M1540,248 L1580,224 L1608,203 L1650,235 L1690,222 L1740,210 L1800,213 L1850,212 L1890,212 L1940,226 L1990,228 L2040,245 L2100,242 L2165,230 L2200,240 L2300,243 L2340,260 L2400,268 L2576,265 L2576,288 L1540,288Z"/>
+</g>
+<path d="M0,300 L100,290 L300,285 L450,275 L640,265 L800,275 L930,265 L1050,252 L1130,245 L1200,252 L1300,262 L1395,230 L1480,245 L1600,248 L1680,270 L1800,285 L2000,290 L2100,292 L2300,290 L2440,285 L2576,300 L2576,410 L0,410Z" fill="#6a93c2"/>
+<path d="M0,375 L300,355 L600,350 L900,365 L1200,380 L1500,375 L1800,385 L2576,410 L0,410Z" fill="#547f9c"/>
+<path d="M1930,410 L2200,362 L2400,322 L2500,292 L2576,282 L2576,410Z" fill="#2f5a45"/>
+<g id="mk"></g>
+<g id="tip" style="pointer-events:none;visibility:hidden"><rect id="tr" rx="8" height="44" fill="#1f2a38"/><text id="tt" font-size="26" font-weight="600" fill="#fff" dominant-baseline="central" font-family="system-ui,sans-serif"></text></g>
+</svg>
+</div>
+
+<div class="card">
+<b id="in">Tap a peak</b>
+<p id="id"></p>
+<div class="edit">
+<div><label for="fn">Name</label><input id="fn"></div>
+<div><label for="fh">Height</label><input id="fh"></div>
+<div><label for="fg">Notes</label><input id="fg"></div>
+<div class="row"><button id="save">Save changes</button><button id="reset">Reset all to original</button><button id="copy">Copy data</button></div>
+</div>
+<p class="hint">Edits are saved in this browser on this device. If you clear browser data, they're lost; use Copy data to keep a backup.</p>
+</div>
+<div id="chips"></div>
+
+<script>
+/* Edit the defaults here if you want to change the file itself.
+   x and y are positions on the panorama (summit location). */
+var DEFAULTS=[
+{n:"Kedarnath",h:"6,940 m",g:"Garhwal, Gangotri-Kedar group (approx.)",x:300,y:262},
+{n:"Chaukhamba",h:"7,138 m",g:"Garhwal, Gangotri group (approx.)",x:560,y:249},
+{n:"Neelkanth",h:"6,596 m",g:"Garhwal, above Badrinath (approx.)",x:760,y:253},
+{n:"Kamet",h:"7,756 m",g:"Zanskar range, border with Tibet (approx.)",x:1010,y:256},
+{n:"Dunagiri",h:"7,066 m",g:"Garhwal, Nanda Devi sanctuary rim (approx.)",x:1235,y:251},
+{n:"Nanda Ghunti",h:"6,309 m",g:"Garhwal-Kumaon, sanctuary rim (approx.)",x:1465,y:222},
+{n:"Trishul I",h:"7,120 m",g:"Kumaon, three-peaked massif (clearest peak)",x:1608,y:203},
+{n:"Maiktoli",h:"6,803 m",g:"Kumaon, sanctuary rim, near Mrigthuni (identified by you)",x:1740,y:210},
+{n:"Nanda Devi",h:"7,816 m",g:"Kumaon, highest peak wholly in India (approx.)",x:1890,y:212},
+{n:"Nanda Devi East",h:"7,434 m",g:"Kumaon, twin of Nanda Devi (approx.)",x:1990,y:228},
+{n:"Nanda Kot",h:"6,861 m",g:"Kumaon, Pindari region (pointed peak at right)",x:2165,y:230},
+{n:"Nanda Khat",h:"6,611 m",g:"Kumaon, near Pindari glacier (approx.)",x:2300,y:243}
+];
+var KEY="ranikhet-peaks-v1",P;
+try{var s=localStorage.getItem(KEY);P=s?JSON.parse(s):null}catch(e){P=null}
+if(!P||P.length!==DEFAULTS.length)P=JSON.parse(JSON.stringify(DEFAULTS));
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
+
+var NS="http://www.w3.org/2000/svg",mk=document.getElementById("mk"),chips=document.getElementById("chips");
+var tip=document.getElementById("tip"),tr=document.getElementById("tr"),tt=document.getElementById("tt");
+var dots=[],btns=[],cur=6;
+function $(i){return document.getElementById(i)}
+function show(i){
+cur=i;var p=P[i];
+$("in").textContent=p.n+" \u00b7 "+p.h;$("id").textContent=p.g;
+$("fn").value=p.n;$("fh").value=p.h;$("fg").value=p.g;
+tt.textContent=p.n;
+var w=tt.getComputedTextLength()+28,x=Math.max(10,Math.min(2576-w-10,p.x-w/2)),y=Math.max(160,p.y-72);
+tr.setAttribute("x",x);tr.setAttribute("y",y);tr.setAttribute("width",w);
+tt.setAttribute("x",x+14);tt.setAttribute("y",y+22);
+tip.style.visibility="visible";
+dots.forEach(function(d,j){d.setAttribute("fill",j===i?"#EF9F27":"#fff");d.setAttribute("r",j===i?13:9)});
+btns.forEach(function(b,j){b.className=j===i?"on":"";b.textContent=P[j].n});
+}
+P.forEach(function(p,i){
+var g=document.createElementNS(NS,"g");g.style.cursor="pointer";
+function mkEl(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e}
+g.appendChild(mkEl("line",{x1:p.x,x2:p.x,y1:p.y-12,y2:p.y-60,stroke:"#fff","stroke-width":2,"stroke-dasharray":"5 5"}));
+var d=mkEl("circle",{cx:p.x,cy:p.y,r:9,fill:"#fff",stroke:"#1f2a38","stroke-width":3});
+g.appendChild(d);
+g.appendChild(mkEl("circle",{cx:p.x,cy:p.y,r:38,fill:"transparent"}));
+mk.appendChild(g);dots.push(d);
+g.addEventListener("mouseenter",function(){show(i)});
+g.addEventListener("click",function(){show(i)});
+var b=document.createElement("button");
+b.addEventListener("click",function(){show(i)});
+chips.appendChild(b);btns.push(b);
+});
+$("save").addEventListener("click",function(){
+P[cur].n=$("fn").value.trim()||P[cur].n;P[cur].h=$("fh").value.trim();P[cur].g=$("fg").value.trim();
+persist();show(cur);
+});
+$("reset").addEventListener("click",function(){
+P=JSON.parse(JSON.stringify(DEFAULTS));persist();show(cur);
+});
+$("copy").addEventListener("click",function(){
+var t=JSON.stringify(P,null,1),b=$("copy");
+if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){b.textContent="Copied"},function(){b.textContent="Copy failed"})}
+else{b.textContent="Copy not supported"}
+setTimeout(function(){b.textContent="Copy data"},1500);
+});
+var sc=$("sc");sc.scrollLeft=Math.max(0,(1750/2576)*1500-sc.clientWidth/2);
+show(7);
+</script>
+</body>
+</html>
